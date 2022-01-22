@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "503771732158",
+    "firebase_url": "https://firatmap-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "firatmap",
+    "storage_bucket": "firatmap.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:503771732158:android:ccf11c41413b2de83566ef",
+        "android_client_info": {
+          "package_name": "com.example.firatmap"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "503771732158-6g655bpddi029acb4icaul4ofa294eep.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDB7za9XgZz3IILosubwgR7S-_pOtKp3sI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "503771732158-6g655bpddi029acb4icaul4ofa294eep.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
