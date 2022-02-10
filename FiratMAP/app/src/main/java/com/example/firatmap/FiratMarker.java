@@ -6,7 +6,6 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -15,16 +14,18 @@ public class FiratMarker{
     private Marker marker;
     private LatLng latLng;
     private String title;
+    private String description;
     private List<Departments> departments;
-    public FiratMarker(int ID, LatLng latLng, String name, Bitmap markerIcon, List<Departments> departments) {
+    private Bitmap Icon;
+    public FiratMarker(int ID, LatLng latLng, String name,String description ,Bitmap markerIcon, List<Departments> departments) {
         if (ID==0){
             this.ID = findId();
         }else{
             this.ID = ID;
         }
+        this.description = description;
         this.latLng = latLng;
         this.title = name;
-        this.departments = new ArrayList<Departments>();
         this.departments = departments;
     }
     public MarkerOptions getMarkerOption(){
@@ -34,6 +35,7 @@ public class FiratMarker{
                 .snippet(Integer.toString(ID))
                 .position(latLng)
                 .anchor(0.5f, 0.5f);
+
         return markerOption;
     }
     @Override
@@ -89,9 +91,22 @@ public class FiratMarker{
     public List<Departments> getDepartments() {
         return departments;
     }
-
+    public String getDescription() {
+        return description;
+    }
+    public void setDescription(String description) {
+        this.description = description;
+    }
     public void setDepartments(List<Departments> departments) {
         this.departments = departments;
     }
 
+    public Bitmap getIcon() {
+        return Icon;
+    }
+
+    public void setIcon(Bitmap icon) {
+        marker.setIcon(BitmapDescriptorFactory.fromBitmap(icon));
+        Icon = icon;
+    }
 }

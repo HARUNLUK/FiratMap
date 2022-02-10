@@ -3,33 +3,18 @@ package com.example.firatmap;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
-
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.graphics.Color;
-import android.location.Address;
-import android.location.Geocoder;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.speech.RecognizerIntent;
-import android.view.Display;
-import android.view.Gravity;
 import android.view.View;
-import android.widget.Adapter;
-import android.widget.AdapterView;
-import android.widget.Button;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -38,19 +23,14 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.PointOfInterest;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
-import com.google.android.material.bottomsheet.BottomSheetDialog;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
-import java.util.Random;
 
 public class MainActivity extends FragmentActivity implements OnMapReadyCallback,
         GoogleMap.OnMarkerClickListener,
@@ -62,8 +42,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     FireBaseHelper fireBaseHelper;
     GoogleMap googleMap;
     FusedLocationProviderClient fusedLocationProviderClient;
-    String locationAddress;
-    Location location;
+    public Location location;
     LayoutControl layoutControl;
     LatLng firatlatLng;
 
@@ -97,14 +76,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                 public void onComplete(Task<Location> task) {
                     location = task.getResult();
                     if (location != null) {
-                        Geocoder geocoder = new Geocoder(MainActivity.this, Locale.getDefault());
-                        try {
-                            List<Address> addresses = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(),1);
-                            locationAddress = addresses.get(0).getAddressLine(0);
-                            Toast.makeText(MainActivity.this, locationAddress, Toast.LENGTH_LONG).show();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
+                        MainActivity.instance.location = location;
                     }
                 }
             });
@@ -128,7 +100,6 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                 }
                 return;
             }
-
         }
     }
     @Override
@@ -137,9 +108,10 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         googleMap.setOnMarkerClickListener(this);
         googleMap.setOnPoiClickListener(this);
         firatlatLng = new LatLng(38.6777569,39.1997669);
-        googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(firatlatLng,16));
+        googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(firatlatLng,15));
         LoadLocations();
         getLocation();
+        googleMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this,R.raw.map_style));
     }
 
     public void LoadLocations(){
@@ -149,7 +121,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 
     public void LoadDepartmentsToLayout(){
         ListView listView = findViewById(R.id.departments_listview);
-        LayoutControl.LoadDepartmentsToListView(departments,listView);
+        layoutControl.LoadDepartmentsToListView(departments,listView,ListType.LAYOUT);
     }
 
     @Override
@@ -160,14 +132,13 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                 fmarker = m;
             }
         }
-
+        markerZoom(fmarker.getLatLng(),16);
         layoutControl.openMarkerBottomSheetLayout(fmarker);
-        return false;
+        return true;
     }
     public void displayTrack(LatLng targetLatLang){
         try {
             getLocation();
-            Toast.makeText(this,locationAddress+"",Toast.LENGTH_LONG).show();
             Uri uri = Uri.parse("https://www.google.co.in/maps/dir/"+location.getLatitude()+
                     ","+location.getLongitude()+
                     "/"+targetLatLang.latitude+","+targetLatLang.longitude);
@@ -186,10 +157,10 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onPoiClick(@NonNull PointOfInterest pointOfInterest) {
         List<Departments> poidepartments = new ArrayList<Departments>();
-        FiratMarker newFirat = new FiratMarker(0,pointOfInterest.latLng,pointOfInterest.name,null,null);
-        departments.add(new Departments("TestInner",newFirat.getID()));
-        departments.add(new Departments("TestInner",newFirat.getID()));
-        departments.add(new Departments("TestInner",newFirat.getID()));
+        FiratMarker newFirat = new FiratMarker(0,pointOfInterest.latLng,pointOfInterest.name,"",null,null);
+        poidepartments.add(new Departments("TestInner",newFirat.getID()));
+        poidepartments.add(new Departments("TestInner",newFirat.getID()));
+        poidepartments.add(new Departments("TestInner",newFirat.getID()));
         newFirat.setDepartments(poidepartments);
         fireBaseHelper.addMarker(newFirat);
     }
@@ -199,10 +170,14 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                 System.out.println("//*/*-/-*/--*"+mark.getTitle());
                 layoutControl.openMapLayout();
                 layoutControl.openMarkerBottomSheetLayout(mark);
+                markerZoom(mark.getLatLng(),18);
             }
         }
     }
 
+    public void markerZoom(LatLng latLng,float distance){
+        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng,distance));
+    }
     public void speak(View view) {
         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
@@ -223,6 +198,8 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
             }
             if(SearchedDepartments.size() == 1){
                 showFacilityOnMap(SearchedDepartments.get(0).parent);
+            }else{
+                layoutControl.search(search);
             }
         }
     }

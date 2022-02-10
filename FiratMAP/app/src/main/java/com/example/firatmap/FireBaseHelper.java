@@ -2,12 +2,20 @@ package com.example.firatmap;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
+import android.view.LayoutInflater;
+import android.view.View;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -59,7 +67,11 @@ public class FireBaseHelper {
         MainActivity.instance.googleMap.addMarker(marker.getMarkerOption());
         DatabaseReference ref = databaseReference.child("Locations");
         FiratMarkerData data = new FiratMarkerData(marker);
-        ref.child(Integer.toString(marker.getID())).setValue(data);
+        DatabaseReference markerRef = ref.child(Integer.toString(marker.getID()));
+        markerRef.setValue(data);
+        for (int i=0;i<data.departments.size();i++){
+            markerRef.child("departments").child(Integer.toString(i)).setValue(data.departments.get(i).name);
+        }
     }
     public void addMarkers(List<FiratMarker> markers){
         for (FiratMarker marker:markers) {
@@ -79,23 +91,38 @@ public class FireBaseHelper {
                         LatLng latLng = new LatLng(latitude,longitude);
                         int key = Integer.parseInt(c.getKey().toString());
                         String name =  c.child("title").getValue().toString();
+                        String desciption="";
 
+                        try{
+                            desciption = c.child("description").getValue().toString();
+                        }catch (Exception e){
+                            e.printStackTrace();
+                        }
+
+                        if(name.contains("\n")){
+                            name = name.split("\n")[1];
+                        }
                         List<Departments> departments = new ArrayList<Departments>();
 
                         for (DataSnapshot data: c.child("departments").getChildren()){
-                            Departments department = new Departments(data.child("name").getValue().toString(),key);
+                            Departments department = new Departments(data.getValue().toString(),key);
                             departments.add(department);
                             MainActivity.departments.add(department);
                         }
-
-                        FiratMarker marker = new FiratMarker(key,latLng,name,null,departments);
+                        if(departments.size()==0){
+                            MainActivity.departments.add(new Departments(name,key));
+                        }
+                        FiratMarker marker = new FiratMarker(key,latLng,name,desciption,null,departments);
                         MainActivity.markers.add(marker);
                     }
 
                     MainActivity.instance.LoadDepartmentsToLayout();
                     for(FiratMarker marker : MainActivity.markers){
                         getIconFromFirebase(marker);
-                        marker.setMarker(MainActivity.instance.googleMap.addMarker(marker.getMarkerOption()));
+                        Marker nMaker =  MainActivity.instance.googleMap.addMarker(marker.getMarkerOption());
+
+                        marker.setMarker(nMaker);
+                        marker.getMarker().setIcon(BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView(marker.getTitle(),null)));
                     }
                 }catch (RuntimeExecutionException e){
                     getFireBaseLocations();
@@ -115,8 +142,10 @@ public class FireBaseHelper {
                     if(bitmap != null && marker !=null){
                         int height = 130;
                         int width = 130;
+                        System.out.println("++"+bitmap);
                         bitmap = Bitmap.createScaledBitmap(bitmap, width, height, false);
-                        marker.getMarker().setIcon(BitmapDescriptorFactory.fromBitmap(bitmap));
+                        marker.setIcon(bitmap);
+                        marker.getMarker().setIcon(BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView(marker.getTitle(),bitmap)));
                     }
                 }
             }).addOnFailureListener(new OnFailureListener() {
@@ -129,6 +158,30 @@ public class FireBaseHelper {
             e.printStackTrace();
         }
     }
+
+    private Bitmap getMarkerBitmapFromView(String title,Bitmap btm) {
+        View customMarkerView = (LayoutInflater.from(MainActivity.instance.getApplicationContext()).inflate(R.layout.custom_marker_view, null));
+
+        TextView text = (TextView) customMarkerView.findViewById(R.id.customText);
+        text.setText(title);
+        if(btm!=null){
+            ImageView markerImageView = (ImageView) customMarkerView.findViewById(R.id.customImg);
+            markerImageView.setImageBitmap(btm);
+        }
+        customMarkerView.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
+        customMarkerView.layout(0, 0, customMarkerView.getMeasuredWidth(), customMarkerView.getMeasuredHeight());
+        customMarkerView.buildDrawingCache();
+        Bitmap returnedBitmap = Bitmap.createBitmap(customMarkerView.getMeasuredWidth(), customMarkerView.getMeasuredHeight(),
+                Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(returnedBitmap);
+        canvas.drawColor(Color.WHITE, PorterDuff.Mode.SRC_IN);
+        Drawable drawable = customMarkerView.getBackground();
+        if (drawable != null)
+            drawable.draw(canvas);
+        customMarkerView.draw(canvas);
+        return returnedBitmap;
+    }
+
     public void setImageView(ImageView imageView, String imageName){
         StorageReference locationIconRef = storageReferenceLocationIcons.child("Locaiton_Icons/"+imageName);
         try{

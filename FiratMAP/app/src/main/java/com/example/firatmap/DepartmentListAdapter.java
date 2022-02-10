@@ -5,7 +5,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.Filter;
 import android.widget.Filterable;
 import android.widget.ImageView;
@@ -14,40 +13,53 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
-import java.util.regex.Pattern;
 
 public class DepartmentListAdapter extends ArrayAdapter<Departments> implements Filterable {
+    ListType listType;
     ArrayList<Departments> itemsModelSl ;
     ArrayList<Departments> itemsModelListFiltered;
-    public DepartmentListAdapter(Context context, ArrayList<Departments> firatMarkerArrayList){
+    public DepartmentListAdapter(Context context, ArrayList<Departments> firatMarkerArrayList,ListType listType){
         super(context,R.layout.departments_list_item,firatMarkerArrayList);
         itemsModelSl=firatMarkerArrayList;
         itemsModelListFiltered = itemsModelSl;
+        this.listType = listType;
     }
 
     @NonNull
     @Override
     public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
         View view = LayoutInflater.from(getContext()).inflate(R.layout.departments_list_item,parent,false);
-
         //ImageView imageView = convertView.findViewById(R.id.departmant_item_imageview);
-        TextView textView = view.findViewById(R.id.departmant_item_title);
-        Button button = view.findViewById(R.id.departmant_item_button);
+        TextView textViewFacility = view.findViewById(R.id.department_facility_title);
+        TextView textViewDepartment = view.findViewById(R.id.department_item_title);
+        ImageView imageView = view.findViewById(R.id.department_item_img);
+
+        if(listType == ListType.BOTTOM_VIEW){
+            imageView.setVisibility(View.GONE);
+            textViewFacility.setVisibility(View.GONE);
+        }
+
+        //Button button = view.findViewById(R.id.department_item_button);
         /*if(marker.icon!=null){
             System.out.println("--null");
             MainActivity.instance.fireBaseHelper.setImageView(imageView,marker.icon);
         }*/
-        textView.setText(itemsModelListFiltered.get(position).name);
-        button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                System.out.println(itemsModelListFiltered.get(position).name);
+
+        int facilityId = itemsModelListFiltered.get(position).parent;
+        for (FiratMarker marker: MainActivity.markers) {
+            if(facilityId == marker.getID()){
+                textViewFacility.setText(marker.getTitle());
+                if(marker.getIcon() == null){
+                    imageView.setImageResource(R.drawable.ic_facility);
+                }else{
+                    imageView.setImageBitmap(marker.getIcon());
+                }
             }
-        });
+        }
+
+        textViewDepartment.setText(itemsModelListFiltered.get(position).name);
         return view;
     }
 
@@ -70,7 +82,6 @@ public class DepartmentListAdapter extends ArrayAdapter<Departments> implements 
     @Override
     public Filter getFilter() {
         Filter filter = new Filter() {
-
             @Override
             protected FilterResults performFiltering(CharSequence charSequence) {
                 FilterResults result = new FilterResults();
@@ -100,4 +111,8 @@ public class DepartmentListAdapter extends ArrayAdapter<Departments> implements 
         };
         return filter;
     }
+}
+enum ListType{
+    LAYOUT,
+    BOTTOM_VIEW
 }
