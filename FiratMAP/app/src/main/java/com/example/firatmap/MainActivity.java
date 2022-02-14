@@ -2,19 +2,27 @@ package com.example.firatmap;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentActivity;
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.location.LocationManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.speech.RecognizerIntent;
 import android.view.View;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -44,7 +52,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     FusedLocationProviderClient fusedLocationProviderClient;
     public Location location;
     LayoutControl layoutControl;
-    LatLng firatlatLng;
+    LatLng firatLatLng;
 
 
     @Override
@@ -95,6 +103,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
             case 44: {
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    checkLocation();
                     getLocation();
                     googleMap.setMyLocationEnabled(true);
                 }
@@ -107,8 +116,9 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         googleMap = _googleMap;
         googleMap.setOnMarkerClickListener(this);
         googleMap.setOnPoiClickListener(this);
-        firatlatLng = new LatLng(38.6777569,39.1997669);
-        googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(firatlatLng,15));
+        firatLatLng = new LatLng(38.6777569,39.1997669);
+        googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(firatLatLng,15));
+        checkLocation();
         LoadLocations();
         getLocation();
         googleMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this,R.raw.map_style));
@@ -126,6 +136,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public boolean onMarkerClick(Marker marker) {
+        getLocation();
         FiratMarker fmarker=null;
         for(FiratMarker m: markers){
             if(marker.getSnippet().equals(Integer.toString(m.getID()))){
@@ -136,8 +147,13 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         layoutControl.openMarkerBottomSheetLayout(fmarker);
         return true;
     }
+    @RequiresApi(api = Build.VERSION_CODES.M)
     public void displayTrack(LatLng targetLatLang){
         try {
+            if(location==null){
+                checkLocation();
+                return;
+            }
             getLocation();
             Uri uri = Uri.parse("https://www.google.co.in/maps/dir/"+location.getLatitude()+
                     ","+location.getLongitude()+
@@ -151,6 +167,34 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
             Intent intent = new Intent(Intent.ACTION_VIEW,uri);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(intent);
+        }
+    }
+
+    private void checkLocation() {
+        LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        boolean gps_enabled = false;
+        boolean network_enabled = false;
+
+        try {
+            gps_enabled = lm.isProviderEnabled(LocationManager.GPS_PROVIDER);
+        } catch(Exception ex) {}
+
+        try {
+            network_enabled = lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+        } catch(Exception ex) {}
+
+        if(!gps_enabled && !network_enabled) {
+            // notify user
+            new AlertDialog.Builder(this)
+                    .setMessage("Please Open Your Device's Location Settings")
+                    .setPositiveButton("Open", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface paramDialogInterface, int paramInt) {
+                            startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+                        }
+                    })
+                    .setNegativeButton("Cancel",null)
+                    .show();
         }
     }
 

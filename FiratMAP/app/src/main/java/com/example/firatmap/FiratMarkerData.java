@@ -12,7 +12,7 @@ public class FiratMarkerData {
     public String icon;
     public List<Departments> departments;
 
-    public FiratMarkerData(int id, String title,String description, float latitude, float longitude, List<Departments> departmants) {
+    public FiratMarkerData(int id, String title,String description, double latitude, double longitude, List<Departments> departmants) {
         this.id = id;
         this.title = title;
         this.description = description;

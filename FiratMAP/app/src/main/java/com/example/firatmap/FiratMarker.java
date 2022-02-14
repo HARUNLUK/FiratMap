@@ -100,11 +100,9 @@ public class FiratMarker{
     public void setDepartments(List<Departments> departments) {
         this.departments = departments;
     }
-
     public Bitmap getIcon() {
         return Icon;
     }
-
     public void setIcon(Bitmap icon) {
         marker.setIcon(BitmapDescriptorFactory.fromBitmap(icon));
         Icon = icon;

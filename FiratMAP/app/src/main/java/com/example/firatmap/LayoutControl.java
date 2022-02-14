@@ -20,10 +20,17 @@ import java.util.ArrayList;
 
 public class LayoutControl {
     private static LayoutControl instance;
-    LinearLayout contentLayout;
-    LinearLayout departmentListLayout;
-    LinearLayout mapLayout;
-    LinearLayout bottomLayout;
+    private LinearLayout contentLayout;
+    private LinearLayout departmentListLayout;
+    private LinearLayout mapLayout;
+    private LinearLayout bottomLayout;
+    private BottomSheetDialog marker_bottomSheetDialog;
+    private ImageView marker_imageview;
+    private TextView marker_textview;
+    private TextView marker_description;
+    private ImageButton marker_button;
+    private EditText searchView;
+
     private LayoutControl(){
         contentLayout = MainActivity.instance.findViewById(R.id.content_layout);
         departmentListLayout = contentLayout.findViewById(R.id.departmants_layout);
@@ -45,41 +52,30 @@ public class LayoutControl {
     public void OnBottomDepButtonClick(View view){
         openDepartmentLayout();
     }
-
     public void openMapLayout(){
         mapLayout.setVisibility(View.VISIBLE);
         departmentListLayout.setVisibility(View.GONE);
     }
-
     public void openDepartmentLayout(){
         mapLayout.setVisibility(View.GONE);
         departmentListLayout.setVisibility(View.VISIBLE);
         MainActivity.instance.LoadDepartmentsToLayout();
     }
-
     public void loadMakerBottom(){
-        MK_bottomSheetDialog = LayoutControl.createBottomSheetLayout();
-        MK_textview = MK_bottomSheetDialog.findViewById(R.id.t_name);
-        MK_button = MK_bottomSheetDialog.findViewById(R.id.bt_find);
-        MK_description = MK_bottomSheetDialog.findViewById(R.id.bottom_sheet_description);
-        MK_imageview = MK_bottomSheetDialog.findViewById(R.id.bottom_sheet_img);
+        marker_bottomSheetDialog = LayoutControl.createBottomSheetLayout();
+        marker_textview = marker_bottomSheetDialog.findViewById(R.id.t_name);
+        marker_button = marker_bottomSheetDialog.findViewById(R.id.bt_find);
+        marker_description = marker_bottomSheetDialog.findViewById(R.id.bottom_sheet_description);
+        marker_imageview = marker_bottomSheetDialog.findViewById(R.id.bottom_sheet_img);
     }
-
-    BottomSheetDialog MK_bottomSheetDialog;
-    ImageView MK_imageview;
-    TextView MK_textview;
-    TextView MK_description;
-    ImageButton MK_button;
-    EditText searchView;
-
     public void openMarkerBottomSheetLayout(FiratMarker marker){
-        MK_textview.setText(marker.getTitle());
-        MK_description.setText(marker.getDescription());
+        marker_textview.setText(marker.getTitle());
+        marker_description.setText(marker.getDescription());
         Bitmap btm = marker.getIcon();
         if (btm!=null) {
-            MK_imageview.setImageBitmap(btm);
+            marker_imageview.setImageBitmap(btm);
         }else{
-            MK_imageview.setImageResource(R.drawable.ic_facility);
+            marker_imageview.setImageResource(R.drawable.ic_facility);
         }
 
         ArrayList<Departments> departments = new ArrayList<>();
@@ -89,22 +85,22 @@ public class LayoutControl {
         }
 
         if(departments.size() == 0){
-            MK_bottomSheetDialog.findViewById(R.id.bottom_sheet_departments).setVisibility(View.GONE);
+            marker_bottomSheetDialog.findViewById(R.id.bottom_sheet_departments).setVisibility(View.GONE);
         }else{
-            MK_bottomSheetDialog.findViewById(R.id.bottom_sheet_departments).setVisibility(View.VISIBLE);
+            marker_bottomSheetDialog.findViewById(R.id.bottom_sheet_departments).setVisibility(View.VISIBLE);
         }
 
-        ListView listView = MK_bottomSheetDialog.findViewById(R.id.bottom_dep_list);
+        ListView listView = marker_bottomSheetDialog.findViewById(R.id.bottom_dep_list);
         LoadDepartmentsToListView(departments,listView,ListType.BOTTOM_VIEW);
 
-        MK_button.setOnClickListener(new View.OnClickListener() {
+        marker_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 MainActivity.instance.displayTrack(marker.getLatLng());
-                MK_bottomSheetDialog.dismiss();
+                marker_bottomSheetDialog.dismiss();
             }
         });
-        MK_bottomSheetDialog.show();
+        marker_bottomSheetDialog.show();
     }
     public void loadDepartmentSearchView(ArrayAdapter<Departments> arrayAdapter){
         searchView = MainActivity.instance.findViewById(R.id.departments_search);

@@ -35,15 +35,14 @@ import java.util.List;
 public class FireBaseHelper {
     public static FireBaseHelper instance;
     private String dataBaseURL = "https://firatmap-default-rtdb.europe-west1.firebasedatabase.app/";
-    FirebaseDatabase firebaseDatabase;
-    DatabaseReference databaseReference;
-    FirebaseStorage firebaseStorage;
-    StorageReference storageReferenceLocationIcons;
+    private FirebaseDatabase firebaseDatabase;
+    private DatabaseReference databaseReference;
+    private FirebaseStorage firebaseStorage;
+    private StorageReference storageReferenceLocationIcons;
 
     private FireBaseHelper() {
         firebaseDatabase = FirebaseDatabase.getInstance(dataBaseURL);
         databaseReference = firebaseDatabase.getReference();
-        databaseReference.child("TeknoF").setValue("added");
         firebaseStorage = FirebaseStorage.getInstance("gs://firatmap.appspot.com");
         storageReferenceLocationIcons = firebaseStorage.getReference();
     }
@@ -158,7 +157,6 @@ public class FireBaseHelper {
             e.printStackTrace();
         }
     }
-
     private Bitmap getMarkerBitmapFromView(String title,Bitmap btm) {
         View customMarkerView = (LayoutInflater.from(MainActivity.instance.getApplicationContext()).inflate(R.layout.custom_marker_view, null));
 
@@ -181,7 +179,6 @@ public class FireBaseHelper {
         customMarkerView.draw(canvas);
         return returnedBitmap;
     }
-
     public void setImageView(ImageView imageView, String imageName){
         StorageReference locationIconRef = storageReferenceLocationIcons.child("Locaiton_Icons/"+imageName);
         try{
